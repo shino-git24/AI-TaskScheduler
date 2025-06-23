@@ -1,7 +1,5 @@
-import fetch from 'node-fetch';
-
 // Gemini APIのモデル名
-const MODEL_NAME = 'gemini-2.0-flash';
+const MODEL_NAME = 'gemini-1.5-flash';
 
 // APIキーはNetlifyの環境変数から取得します
 const API_KEY = process.env.GEMINI_API_KEY;
