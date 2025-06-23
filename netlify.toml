@@ -1,0 +1,8 @@
+# Netlifyのビルド設定
+[build]
+  # Netlify Functionsが配置されているディレクトリを指定
+  functions = "netlify/functions"
+
+# Functionsのバンドラ設定
+[functions]
+  node_bundler = "esbuild"

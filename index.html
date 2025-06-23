@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIタスクスケジューラ</title>
+  
+  <!-- Tailwind CSS for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192x192.png">
+  <meta name="theme-color" content="#0f172a">
+
+  <style>
+    /* Custom scrollbar for better aesthetics with the dark theme */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b; /* slate-800 */
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155; /* slate-700 */
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569; /* slate-600 */
+    }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      background-color: #0f172a; /* bg-slate-900 */
+      color: #f1f5f9; /* text-slate-100 */
+    }
+    /* Simple transition for proposed tasks section */
+    .fade-enter {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    .fade-enter-active {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 500ms, transform 500ms;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-900">
+
+  <div class="container mx-auto p-4 sm:p-8 flex flex-col items-center">
+    
+    <header class="mb-10 text-center">
+      <h1 class="text-4xl sm:text-5xl font-bold text-sky-400 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-3 text-sky-400 w-10 h-10">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L1.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09l2.846.813-.813 2.846a4.5 4.5 0 00-3.09 3.09zM18.25 12L17 14.25l-1.25-2.25L13.5 11l2.25-1.25L17 7.5l1.25 2.25L20.5 11l-2.25 1.25z" />
+        </svg>
+        AIタスクスケジューラ
+      </h1>
+      <p class="text-slate-400 mt-2">AIで日々のタスクを整理し、効率的に管理しましょう。</p>
+    </header>
+
+    <!-- AI Input Section -->
+    <section id="ai-section" class="w-full max-w-2xl bg-slate-800 p-6 rounded-lg shadow-xl mb-8" aria-labelledby="ai-input-heading">
+      <h2 id="ai-input-heading" class="text-2xl font-semibold mb-4 text-slate-100">1. スケジュールを入力</h2>
+      <label for="rawScheduleTextarea" class="sr-only">あなたの未処理のスケジュールテキスト</label>
+      <textarea
+        id="rawScheduleTextarea"
+        placeholder="例：9:00 チーム会議。10:30 プロジェクトX作業。昼食。14:00 - コードレビュー"
+        rows="4"
+        class="w-full p-3 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
+      ></textarea>
+      <button
+        id="generate-button"
+        class="mt-4 w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-lg"
+      >
+        AIで生成
+      </button>
+      <p id="ai-error" role="alert" class="text-red-400 mt-3 text-sm hidden"></p>
+    </section>
+
+    <!-- Proposed Schedule Confirmation Section -->
+    <section id="proposed-tasks-section" class="w-full max-w-2xl bg-slate-800 p-6 rounded-lg shadow-xl mb-8 hidden" aria-labelledby="confirm-ai-heading">
+      <h2 id="confirm-ai-heading" class="text-2xl font-semibold mb-4 text-slate-100">2. AIの提案を確認</h2>
+      <ul id="proposed-tasks-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto p-1" aria-label="AIによって提案されたタスク">
+        <!-- Proposed tasks will be rendered here by JS -->
+      </ul>
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+        <button
+          id="confirm-proposed-tasks-button"
+          class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150"
+        >
+          確認してマイタスクに追加
+        </button>
+        <button
+          id="retry-proposed-tasks-button"
+          class="flex-1 bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150"
+        >
+          再試行 / 入力を編集
+        </button>
+      </div>
+    </section>
+
+    <!-- Task List & Add New Task Form Section -->
+    <section id="task-list-section" class="w-full max-w-2xl">
+        <div class="bg-slate-800 p-6 rounded-lg shadow-xl mb-8">
+          <div class="flex justify-between items-center mb-4">
+            <h2 id="my-tasks-heading" class="text-2xl font-semibold text-slate-100">マイタスク</h2>
+            <button 
+              id="clear-all-tasks-button"
+              class="bg-red-600 hover:bg-red-700 text-white font-semibold py-1.5 px-3 rounded-lg shadow-md text-xs sm:text-sm transition duration-150 hidden"
+              aria-label="全タスクをクリア"
+            >
+              全タスクをクリア
+            </button>
+          </div>
+          <ul id="task-list" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1 sm:pr-2" aria-label="あなたの現在のタスクリスト">
+            <!-- Tasks will be rendered here by JS -->
+          </ul>
+          <p id="no-tasks-message" class="text-slate-400 text-center py-4">タスクはまだありません。以下で追加するか、上記のAIジェネレーターを使用してください！</p>
+        </div>
+        
+        <!-- Add New Task Form -->
+        <div class="bg-slate-800 p-6 rounded-lg shadow-xl" aria-labelledby="add-new-task-heading">
+          <h3 id="add-new-task-heading" class="text-xl font-semibold mb-3 text-slate-100">新しいタスクを手動で追加</h3>
+          <form id="add-task-form" class="space-y-3">
+            <div>
+              <label for="newTaskTime" class="sr-only">タスク時間</label>
+              <input
+                id="newTaskTime"
+                type="text"
+                placeholder="時間 (例: 10:00 または「指定なし」)"
+                class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
+              />
+            </div>
+            <div>
+              <label for="newTaskDescription" class="sr-only">タスク内容</label>
+              <input
+                id="newTaskDescription"
+                type="text"
+                placeholder="タスク内容 (例: 「レポート準備」)"
+                required
+                aria-required="true"
+                class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
+              />
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out"
+            >
+              タスクを追加
+            </button>
+          </form>
+        </div>
+    </section>
+
+  </div>
+
+  <!-- Main Application Logic -->
+  <script src="app.js" type="module"></script>
+
+</body>
+</html>
