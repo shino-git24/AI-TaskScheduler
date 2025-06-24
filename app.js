@@ -15,8 +15,10 @@ const noTasksMessage = document.getElementById('no-tasks-message');
 const clearAllTasksButton = document.getElementById('clear-all-tasks-button');
 
 const addTaskForm = document.getElementById('add-task-form');
-const newTaskTimeInput = document.getElementById('newTaskTime');
+const newTaskStartTimeInput = document.getElementById('newTaskStartTime');
+const newTaskEndTimeInput = document.getElementById('newTaskEndTime');
 const newTaskDescriptionInput = document.getElementById('newTaskDescription');
+const newTaskRemarksInput = document.getElementById('newTaskRemarks');
 
 
 // Application State
@@ -48,7 +50,7 @@ const renderTasks = () => {
   noTasksMessage.classList.add('hidden');
   clearAllTasksButton.classList.remove('hidden');
 
-  const sortedTasks = [...tasks].sort((a, b) => a.time.localeCompare(b.time));
+  const sortedTasks = [...tasks].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 
   sortedTasks.forEach(task => {
     const li = document.createElement('li');
@@ -58,7 +60,8 @@ const renderTasks = () => {
       // Render edit form
       li.className = "bg-slate-700 p-4 rounded-lg shadow-md flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3";
       li.innerHTML = `
-        <input type="text" name="time" value="${task.time}" class="edit-time-input bg-slate-600 text-slate-100 p-2 rounded-md border border-slate-500 focus:ring-sky-500 focus:border-sky-500 w-full sm:w-1/5" placeholder="時間">
+        <input type="text" name="startTime" value="${task.startTime}" class="edit-time-input bg-slate-600 text-slate-100 p-2 rounded-md border border-slate-500 focus:ring-sky-500 focus:border-sky-500 w-full sm:w-1/4" placeholder="開始時間">
+        <input type="text" name="endTime" value="${task.endTime}" class="edit-time-input bg-slate-600 text-slate-100 p-2 rounded-md border border-slate-500 focus:ring-sky-500 focus:border-sky-500 w-full sm:w-1/4" placeholder="終了時間">
         <input type="text" name="task" value="${task.task}" class="edit-task-input bg-slate-600 text-slate-100 p-2 rounded-md border border-slate-500 focus:ring-sky-500 focus:border-sky-500 w-full sm:flex-grow" placeholder="タスク内容">
         <div class="flex space-x-2">
           <button class="save-edit-button p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition duration-150" aria-label="保存">
@@ -76,7 +79,8 @@ const renderTasks = () => {
         <input type="checkbox" ${task.isCompleted ? 'checked' : ''} class="toggle-complete-checkbox form-checkbox h-5 w-5 text-sky-500 bg-slate-700 border-slate-600 rounded focus:ring-sky-500 cursor-pointer flex-shrink-0" aria-label="${task.isCompleted ? `タスク「${task.task}」を未完了にする` : `タスク「${task.task}」を完了にする`}">
         <div class="flex-grow">
           <div class="${task.isCompleted ? 'line-through text-slate-400' : ''}">
-            <span class="font-semibold text-sky-400">${task.time}</span> - <span class="text-slate-200">${task.task}</span>
+            <span class="font-semibold text-sky-400">${task.startTime || ''} - ${task.endTime || ''}</span> - <span class="text-slate-200">${task.task}</span>
+            ${task.remarks ? `<span class="block text-xs text-slate-500 mt-1">備考: ${task.remarks}</span>` : ''}
           </div>
           ${task.isCompleted && task.completedAt ? `<span class="block text-xs text-slate-500 mt-1">完了日時: ${task.completedAt}</span>` : ''}
         </div>
@@ -101,7 +105,7 @@ const renderProposedTasks = () => {
     proposedTasks.forEach(pt => {
       const li = document.createElement('li');
       li.className = "bg-slate-700 p-3 rounded-md text-sm";
-      li.innerHTML = `<span class="font-semibold text-sky-400">${pt.time}</span> - <span class="text-slate-200">${pt.task}</span>`;
+      li.innerHTML = `<span class="font-semibold text-sky-400">${pt.startTime} - ${pt.endTime}</span> - <span class="text-slate-200">${pt.task}</span> ${pt.remarks ? `<span class="text-xs text-slate-400">(${pt.remarks})</span>` : ''}`;
       proposedTasksList.appendChild(li);
     });
     proposedTasksSection.classList.remove('hidden');
@@ -214,8 +218,11 @@ const handleGenerateSchedule = async () => {
 const handleConfirmProposedTasks = () => {
   if (proposedTasks) {
     const newTasks = proposedTasks.map(pt => ({
-      ...pt,
       id: generateId(),
+      startTime: pt.startTime || '未定',
+      endTime: pt.endTime || '未定',
+      task: pt.task || '名称未設定タスク',
+      remarks: pt.remarks || '',
       isCompleted: false,
     }));
     tasks = newTasks; // Replace current tasks with proposed ones
@@ -250,12 +257,16 @@ const handleAddNewTask = (event) => {
   const description = newTaskDescriptionInput.value.trim();
   if (!description) return;
 
-  const time = newTaskTimeInput.value.trim() || "指定なし";
+  const startTime = newTaskStartTimeInput.value.trim() || "未定";
+  const endTime = newTaskEndTimeInput.value.trim() || "未定";
+  const remarks = newTaskRemarksInput.value.trim();
 
   const newTask = {
     id: generateId(),
-    time: time,
+    startTime,
+    endTime,
     task: description,
+    remarks,
     isCompleted: false,
   };
 
@@ -303,11 +314,12 @@ const handleTaskListClick = (event) => {
 
   // Save edit
   if (target.closest('.save-edit-button')) {
-    const newTime = taskLi.querySelector('.edit-time-input').value;
-    const newTaskDesc = taskLi.querySelector('.edit-task-input').value;
+    const newStartTime = taskLi.querySelector('input[name="startTime"]').value;
+    const newEndTime = taskLi.querySelector('input[name="endTime"]').value;
+    const newTaskDesc = taskLi.querySelector('input[name="task"]').value;
     tasks = tasks.map(task =>
       task.id === taskId
-        ? { ...task, time: newTime, task: newTaskDesc }
+        ? { ...task, startTime: newStartTime, endTime: newEndTime, task: newTaskDesc }
         : task
     );
     editingTaskId = null;

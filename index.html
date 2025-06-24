@@ -69,7 +69,7 @@
       <label for="rawScheduleTextarea" class="sr-only">あなたの未処理のスケジュールテキスト</label>
       <textarea
         id="rawScheduleTextarea"
-        placeholder="例：9:00 チーム会議。10:30 プロジェクトX作業。昼食。14:00 - コードレビュー"
+        placeholder="例：提案書作成 2時間、資料レビュー 1時間、15時にクライアントと電話"
         rows="4"
         class="w-full p-3 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
       ></textarea>
@@ -127,14 +127,25 @@
         <div class="bg-slate-800 p-6 rounded-lg shadow-xl" aria-labelledby="add-new-task-heading">
           <h3 id="add-new-task-heading" class="text-xl font-semibold mb-3 text-slate-100">新しいタスクを手動で追加</h3>
           <form id="add-task-form" class="space-y-3">
-            <div>
-              <label for="newTaskTime" class="sr-only">タスク時間</label>
-              <input
-                id="newTaskTime"
-                type="text"
-                placeholder="時間 (例: 10:00 または「指定なし」)"
-                class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
-              />
+            <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+              <div class="flex-1">
+                <label for="newTaskStartTime" class="sr-only">開始時間</label>
+                <input
+                  id="newTaskStartTime"
+                  type="text"
+                  placeholder="開始時間 (例: 10:00)"
+                  class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
+                />
+              </div>
+              <div class="flex-1">
+                <label for="newTaskEndTime" class="sr-only">終了時間</label>
+                <input
+                  id="newTaskEndTime"
+                  type="text"
+                  placeholder="終了時間 (例: 11:00)"
+                  class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
+                />
+              </div>
             </div>
             <div>
               <label for="newTaskDescription" class="sr-only">タスク内容</label>
@@ -144,6 +155,15 @@
                 placeholder="タスク内容 (例: 「レポート準備」)"
                 required
                 aria-required="true"
+                class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
+              />
+            </div>
+            <div>
+              <label for="newTaskRemarks" class="sr-only">備考</label>
+              <input
+                id="newTaskRemarks"
+                type="text"
+                placeholder="備考 (任意)"
                 class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-100 placeholder-slate-400 transition-colors duration-150"
               />
             </div>
